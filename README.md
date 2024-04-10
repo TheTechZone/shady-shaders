@@ -2,6 +2,27 @@
 
 Toy OpenGL setup using python for the driver code.
 
+## Setup
+
+Clone the repo:
+
+```bash
+git clone https://github.com/TheTechZone/shady-shaders.git
+git pull --all
+```
+
+Setup deps:
+
+```bash
+python -m pip install requirements.txt
+python3 main.py
+```
+
+## Examples
+
+Some examples are on their own branch. To run them checkout the corresponding branch
+
+[Draw a simple triangle and color it.](https://github.com/TheTechZone/shady-shaders/tree/example-triangle)
 
 ## OpenGL concepts
 
