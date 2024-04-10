@@ -27,6 +27,8 @@ Some examples are on their own branch. To run them checkout the corresponding br
 ## OpenGL concepts
 
 
+### Terms
+
 **Vertex**: a point in the world, used to define a boundary / to join surfaces. (We can technically also just render point clouds directly but that is an exceptional scenario).
 
 **Triangle**: most common geometric primitive we deal with in graphics. It is defined by 3 poitns and a normal vector (indicate the front face of the triangle / it is **perpendicular to the surface**).
@@ -43,7 +45,12 @@ Some examples are on their own branch. To run them checkout the corresponding br
 
 ---
 
-**Frame Buffer** The Frame Buffer is a portion of graphics memory that holds the scene data. This buffer contains details such as the width and height of the surface (in pixels), color of each pixel, and depth and stencil buffers. Once all the fragments are processed, a 2D image is formed and displayed on the screen. The frame buffer is the final destination of the rendering pipeline
+**Vertex Buffer**: GPU-allocated memory. "Big dumb" bunch of ones and zeros with no meaning attached.
+**Attribute Pointer**: How the GPU can interpret a vertex & extract individual attributes from a buffer.
+
+**Vertex Array**: convenience wrapper arround the two
+
+**Frame Buffer**: The Frame Buffer is a portion of graphics memory that holds the scene data. This buffer contains details such as the width and height of the surface (in pixels), color of each pixel, and depth and stencil buffers. Once all the fragments are processed, a 2D image is formed and displayed on the screen. The frame buffer is the final destination of the rendering pipeline. Think of it as the thing we "write to".
 
 
 ### Rendering pipeline

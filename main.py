@@ -3,68 +3,11 @@ from pathlib import Path
 import glfw
 import glfw.GLFW as GLFW_CONSTANTS
 from OpenGL.GL import *
-from OpenGL.GL.shaders import compileProgram, compileShader
+
+from utils import *
+import mesh_factory
 
 glfw.ERROR_REPORTING = "warn"
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 480
-
-
-def create_shader_module(filepath: str, module_type: int) -> int:
-    """
-    Compile a shader module.
-
-    Parameters:
-
-        filepath: filepath to the module source code.
-
-        module_type: indicates which type of module to compile.
-
-    returns:
-
-        A handle to the created shader module.
-    """
-
-    source_code = ""
-    with open(filepath, "r") as file:
-        source_code = file.readlines()
-
-    return compileShader(source_code, module_type)
-
-
-def create_shader_program(vertex_filepath: str, fragment_filepath: str) -> int:
-    """
-    Compile and link a shader program.
-
-    The terminology used by OpenGL can be a bit confusing :sigh:
-
-    So, we refer to the code running at a certain step in the graphics pipeline as a *shader*, but it
-    is in fact a **shader module**.
-
-    A full shader program consists of compiled shader modules which are then linked together, e.g.
-    a vertex and a fragment shader. This makes sense, since otherwise we wouldn't be able to pass
-    data from one to the other (how else could the frament shader now what it can expect as `in`?)
-
-    Parameters:
-
-        vertex_filepath: filepath to the vertex module source code.
-
-        fragment_filepath: filepath to the fragment module source code.
-
-    returns:
-
-        A handle to the created shader program.
-    """
-
-    vertex_module = create_shader_module(vertex_filepath, GL_VERTEX_SHADER)
-    fragment_module = create_shader_module(fragment_filepath, GL_FRAGMENT_SHADER)
-
-    shader = compileProgram(vertex_module, fragment_module)
-
-    glDeleteShader(vertex_module)
-    glDeleteShader(fragment_module)
-
-    return shader
 
 
 class App:
@@ -124,6 +67,12 @@ class App:
         """
         glClearColor(0.1, 0.4, 0.2, 1)
 
+        self.triangle_vbo, self.triangle_vao = mesh_factory.build_triangle_mesh2()
+        self.quad_ebo, self.quad_vbo, self.quad_vao = mesh_factory.build_quad_mesh()
+        self.shader = create_shader_program(
+            "shaders/vertex.vert", "shaders/fragment.frag"
+        )
+
     def __key_callback(self, window, key, scancode, action, mods):
         """
         Respond to key events that are recieved by the window.
@@ -148,20 +97,30 @@ class App:
 
         # Classic main event loop: run forever until the user quits
         while not glfw.window_should_close(self.window):
-            # clear the color buffer to a preset value (last call to glClearColor)
-            glClear(GL_COLOR_BUFFER_BIT)
-            # we use double buffering be default. swaps the front and back buffers of the specified window
-            # (see the rasterization section for info)
-            glfw.swap_buffers(self.window)
-
             """
             processes all pending events in the event queue immediately and then returns,
             ensuring that window and input callbacks associated with those events are called.
             """
             glfw.poll_events()
 
+            # clear the color buffer to a preset value (last call to glClearColor)
+            glClear(GL_COLOR_BUFFER_BIT)
+
+            glUseProgram(self.shader)
+            # glBindVertexArray(self.triangle_vao)
+            # glDrawArrays(GL_TRIANGLES, 0, 3)
+            glBindVertexArray(self.quad_vao)
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, ctypes.c_void_p(0))
+
+            # we use double buffering be default. swaps the front and back buffers of the specified window
+            # (see the rasterization section for info)
+            glfw.swap_buffers(self.window)
+
     def quit(self):
         """cleanup the app, run exit code"""
+        glDeleteBuffers(3, (self.triangle_vbo, self.quad_ebo, self.quad_vbo))
+        glDeleteVertexArrays(2, (self.triangle_vao, self.quad_vao))
+        glDeleteProgram(self.shader)
         glfw.destroy_window(self.window)
         glfw.terminate()
 
