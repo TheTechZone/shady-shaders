@@ -124,6 +124,9 @@ class App:
         """
         glClearColor(0.1, 0.4, 0.2, 1)
 
+        self.VAO = glGenVertexArrays(1)
+        self.shader = create_shader_program("shaders/vertex.vert","shaders/fragment.frag")
+
     def __key_callback(self, window, key, scancode, action, mods):
         """
         Respond to key events that are recieved by the window.
@@ -150,6 +153,10 @@ class App:
         while not glfw.window_should_close(self.window):
             # clear the color buffer to a preset value (last call to glClearColor)
             glClear(GL_COLOR_BUFFER_BIT)
+            
+            glUseProgram(self.shader)
+            glBindVertexArray(self.VAO)
+            glDrawArrays(GL_TRIANGLES, 0,3)
             # we use double buffering be default. swaps the front and back buffers of the specified window
             # (see the rasterization section for info)
             glfw.swap_buffers(self.window)
@@ -162,6 +169,8 @@ class App:
 
     def quit(self):
         """cleanup the app, run exit code"""
+        glDeleteVertexArrays(1, (self.VAO,))
+        glDeleteProgram(self.shader)
         glfw.destroy_window(self.window)
         glfw.terminate()
 
