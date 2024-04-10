@@ -36,6 +36,15 @@ def create_shader_program(vertex_filepath: str, fragment_filepath: str) -> int:
     """
     Compile and link a shader program.
 
+    The terminology used by OpenGL can be a bit confusing :sigh:
+
+    So, we refer to the code running at a certain step in the graphics pipeline as a *shader*, but it
+    is in fact a **shader module**.
+
+    A full shader program consists of compiled shader modules which are then linked together, e.g.
+    a vertex and a fragment shader. This makes sense, since otherwise we wouldn't be able to pass
+    data from one to the other (how else could the frament shader now what it can expect as `in`?)
+
     Parameters:
 
         vertex_filepath: filepath to the vertex module source code.
@@ -62,15 +71,24 @@ class App:
     window_name = "Title"
 
     def __init__(self, window_name=None):
+        """Setup any context-specif stuff (non graphics related)"""
         if window_name is not None:
             self.window_name = window_name
 
         """Initialise the program"""
-        # Initialize the library
+        self.__initialize_glfw()
+        self.__initialize_opengl()
+
+    def __initialize_glfw(self) -> None:
+        """
+        GLFW is a library providing a simple interface for creating windows with OpenGL / OpenGL ES.
+        It is also used to handle input events.
+
+        Initialize all glfw related stuff. Make a window, basically.
+        """
         if not glfw.init():
             print("Could not initialize OpenGL context")
             exit(1)
-
         # Use GLFW 3.3 since (3.4 is broken atm)
         glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MAJOR, 3)
         glfw.window_hint(GLFW_CONSTANTS.GLFW_CONTEXT_VERSION_MINOR, 3)
@@ -92,31 +110,55 @@ class App:
             print(f"Could not initialize window '{self.window_name}'")
             exit(1)
 
+        # makes the OpenGL context of the specified window current on the calling thread,
+        # allowing for the management of multiple contexts across different threads
         glfw.make_context_current(self.window)
-
         # setup callbacks - glfw does not pull for keys events so we need to listen for them
-        glfw.set_key_callback(self.window, self._key_callback)
+        glfw.set_key_callback(self.window, self.__key_callback)
+        # Set the mouse button callback
+        glfw.set_mouse_button_callback(self.window, self.__mouse_button_callback)
 
+    def __initialize_opengl(self) -> None:
+        """
+        Initialize any opengl related stuff.
+        """
         glClearColor(0.1, 0.4, 0.2, 1)
 
-    def _key_callback(self, window, key, scancode, action, mods):
-        print(key)
+    def __key_callback(self, window, key, scancode, action, mods):
+        """
+        Respond to key events that are recieved by the window.
+        Currently, we just quit on ESC
+        """
         if action == glfw.PRESS:
             print(f"Key {key} was pressed")
 
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(window, True)
 
+    def __mouse_button_callback(self, window, button, action, mods):
+        if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
+            xpos, ypos = glfw.get_cursor_pos(window)
+            print(f"Left mouse button pressed at ({xpos}, {ypos})")
+        elif button == glfw.MOUSE_BUTTON_LEFT and action == glfw.RELEASE:
+            xpos, ypos = glfw.get_cursor_pos(window)
+            print(f"Left mouse button released at ({xpos}, {ypos})")
+
     def run(self):
         """Run the app"""
 
+        # Classic main event loop: run forever until the user quits
         while not glfw.window_should_close(self.window):
-
-            glfw.poll_events()
-
-            # refresh screen
+            # clear the color buffer to a preset value (last call to glClearColor)
             glClear(GL_COLOR_BUFFER_BIT)
+            # we use double buffering be default. swaps the front and back buffers of the specified window
+            # (see the rasterization section for info)
             glfw.swap_buffers(self.window)
+
+            """
+            processes all pending events in the event queue immediately and then returns,
+            ensuring that window and input callbacks associated with those events are called.
+            """
+            glfw.poll_events()
 
     def quit(self):
         """cleanup the app, run exit code"""
